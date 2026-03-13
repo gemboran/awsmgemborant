@@ -56,6 +56,13 @@ includelib shlwapi.lib
 
 .code
 GetScreenshot proc crop_width:DWORD, crop_height:DWORD, save_bmp_file:DWORD 
+    ; --------------------------------------------------------------------------------
+    ; FUNGSI: GetScreenshot
+    ; MENGAMBIL GAMBAR LAYAR (SCREENSHOT) DARI AREA TENGAH LAYAR SAJA
+    ; Fungsi ini mengambil screenshot ukuran kecil (misalnya 7x7) di tempat letak crosshair. 
+    ; Ini untuk mempercepat kinerja dari pada membaca seluruh layar.
+    ; Mengembalikan sebuah "pointer" memori bergambar ke program utama.
+    ; --------------------------------------------------------------------------------
     invoke GetDC, 0
     cmp eax, 0
     je FAILED
@@ -208,6 +215,14 @@ FAILED:
 GetScreenshot endp
 
 FindColor proc pPixels:DWORD, PixelCount:DWORD, ColorSens:DWORD, red:DWORD, green:DWORD, blue:DWORD
+    ; --------------------------------------------------------------------------------
+    ; FUNGSI: FindColor
+    ; MENGECEK SETIAP PIKSEL UNTUK MEMASTIKAN APAKAH ADA WARNA MUNCUL
+    ; Fungsi ini memecah warna setiap piksel ke susunan Red, Green, Blue dan 
+    ; merumuskannya dengan batas "Tolerance / ColorSens". Jika nilainya masih dalam 
+    ; kurun batas toleransi warna target, maka dinyatakan ketemu.
+    ; Jika musuh terdeteksi = Mengembalikan nilai 1
+    ; --------------------------------------------------------------------------------
     mov edi, 0
 LoopBeg:
     ; pPixels[edx] 
@@ -280,6 +295,13 @@ COLOR_NOT_FOUND:
 FindColor endp
 
 LeftClick proc h_window:DWORD
+    ; --------------------------------------------------------------------------------
+    ; FUNGSI: LeftClick
+    ; MENGIRIM PERINTAH KLIK KIRI (DOWN LALU UP) SECARA VIRTUAL TANPA MENGGERAKKAN MOUSE
+    ; Menggunakan sistem interupsi / mengirim pesan Windows API "PostMessage" 
+    ; langsung ke jendela game Valorant agar mouse fisik asli milik Windows 
+    ; tidak perlu digerakkan.
+    ; --------------------------------------------------------------------------------
     invoke PostMessageA, h_window, WM_LBUTTONDOWN, MK_LBUTTON, 0 
     cmp eax, 0
     je POST_MSG_FAILED
@@ -297,6 +319,10 @@ POST_MSG_FAILED:
 LeftClick endp
 
 GetConfig proc
+    ; --------------------------------------------------------------------------------
+    ; FUNGSI: GetConfig
+    ; MEMBACA NILAI-NILAI PENGATURAN (RGB, SENSITIVITAS, DELAY) DARI FILE config.txt
+    ; --------------------------------------------------------------------------------
     invoke GetFullPathNameA, offset cfg_path, MAX_PATH, offset full_cfg_path, 0 
     invoke PathFileExistsA, offset full_cfg_path
     cmp eax, 0
@@ -346,6 +372,10 @@ CONFIG_ERROR:
 GetConfig endp
 
 PrintConsole proc msg:DWORD
+    ; --------------------------------------------------------------------------------
+    ; FUNGSI: PrintConsole 
+    ; MENCETAK TEKS PESAN KE JENDELA LAYAR HITAM CMD
+    ; --------------------------------------------------------------------------------
     invoke GetStdHandle, STD_OUTPUT_HANDLE
     mov ebx, eax
 
@@ -357,6 +387,10 @@ PrintConsole proc msg:DWORD
 PrintConsole endp
 
 IsKeyPressed proc key:DWORD
+    ; --------------------------------------------------------------------------------
+    ; FUNGSI: IsKeyPressed 
+    ; MENGECEK APAKAH SUATU TOMBOL KEYBOARD / MOUSE SEDANG DITEKAN OLEH USER
+    ; --------------------------------------------------------------------------------
     ; 0x8000 is used to check if the key is being pressed down. Use 0x0001 for toggle logic.
     invoke GetAsyncKeyState, key
     and eax, 8000h
