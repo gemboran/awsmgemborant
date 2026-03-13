@@ -1,0 +1,44 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Akan otomatis build ketika push tag yang diawali "v", misalnya "v1.0" atau "v2.1"
+      
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    # Memberi akses action untuk membuat Release di Github repo
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Build the solution (x86 Release)
+      run: msbuild triggerbot.sln /p:Configuration=Release /p:Platform=x86
+
+    - name: Prepare files for release
+      run: |
+        mkdir ReleaseOutput
+        # Biasanya Visual Studio menyimpan file hasil compile di folder Release/ atau source/Release/
+        # Memindahkan file .exe yang berhasil dibuild
+        Copy-Item -Path "Release\*.exe" -Destination "ReleaseOutput\" -ErrorAction SilentlyContinue
+        Copy-Item -Path "source\Release\*.exe" -Destination "ReleaseOutput\" -ErrorAction SilentlyContinue
+        
+        # Memindahkan config.txt
+        Copy-Item -Path "source\config.txt" -Destination "ReleaseOutput\"
+
+    - name: Create ZIP archive
+      run: Compress-Archive -Path ReleaseOutput\* -DestinationPath triggerbot-release.zip
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: triggerbot-release.zip
+        generate_release_notes: true
